@@ -1,0 +1,25 @@
+# Environment / secrets
+.env
+.env.production
+.env.*
+!.env.example
+!.env.production.example
+
+# Node dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Backups
+backups/
+*.sql
+
+# Uploads if they may contain private/user files
+uploads/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/

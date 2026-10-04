@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wallace
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Create a .env file and set POSTGRES_PASSWORD}
+      POSTGRES_DB: wallace_portfolio
+    ports:
+      - "5432:5432"
+    volumes:
+      - wallace_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallace -d wallace_portfolio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 5000
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://wallace:${POSTGRES_PASSWORD}@db:5432/wallace_portfolio?schema=public
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:?Create a .env file and set JWT_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Create a .env file and set ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Create a .env file and set ADMIN_PASSWORD}
+      EMAIL_NOTIFICATIONS: ${EMAIL_NOTIFICATIONS:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      CONTACT_NOTIFY_TO: ${CONTACT_NOTIFY_TO:-}
+    volumes:
+      - wallace_uploads:/app/uploads
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5000/api/ready >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  wallace_postgres:
+  wallace_uploads:

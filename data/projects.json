@@ -1,0 +1,481 @@
+[
+  {
+    "slug": "wallace-dev",
+    "name": "WALLACE.DEV",
+    "status": "LIVE",
+    "status_class": "live",
+    "type": "Personal technology portfolio",
+    "image": "wallace-dev",
+    "alt": "WALLACE.DEV portfolio interface screenshot",
+    "summary": "An evolving portfolio designed to present real projects, technical growth and inspectable evidence without inventing experience.",
+    "problem": "Present student-level technical work professionally without relying on fake experience, arbitrary skill scores or generic portfolio claims.",
+    "solution": "A responsive evidence-based portfolio that connects skills to projects, documents project status, and separates completed evidence from future work.",
+    "technologies": [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "Git",
+      "GitHub",
+      "Responsive Design",
+      "Accessibility"
+    ],
+    "evidence": [
+      "Working responsive interface",
+      "Public portfolio repository",
+      "Project status and case-study system",
+      "Accessible navigation and reduced-motion support"
+    ],
+    "current": "v12 architecture and evidence-system refinement",
+    "next": "Production testing, final CV/domain integration and deployment verification",
+    "github": "https://github.com/wallace-del/portfolio-website",
+    "live": "index.html",
+    "timeline": [
+      [
+        "Requirements",
+        "done"
+      ],
+      [
+        "Interface design",
+        "done"
+      ],
+      [
+        "Frontend",
+        "done"
+      ],
+      [
+        "Evidence architecture",
+        "done"
+      ],
+      [
+        "Production testing",
+        "current"
+      ],
+      [
+        "Deployment verification",
+        "upcoming"
+      ]
+    ],
+    "target": "Employers, clients, collaborators and reviewers who need a clear view of Wallace’s real work and current development level.",
+    "goals": [
+      "Communicate identity and current level honestly",
+      "Show real project evidence",
+      "Make project progress easy to inspect",
+      "Remain maintainable as more projects are built"
+    ],
+    "research": "The project has evolved through repeated portfolio reviews, responsive design work and a deliberate shift from a long static page toward evidence-based project presentation.",
+    "implemented": [
+      "Responsive multi-section homepage",
+      "Dedicated project index and project detail pages",
+      "Project status system",
+      "Skill-to-project evidence links",
+      "Accessible mobile navigation",
+      "Server-backed contact form with PostgreSQL storage, admin inbox and email notifications",
+      "Optimized responsive project/profile images"
+    ],
+    "challenges": [
+      [
+        "Credibility without exaggeration",
+        "Replace percentages and unsupported claims with statuses, project links and inspectable evidence."
+      ],
+      [
+        "Growing page size",
+        "Move detailed case studies into dedicated pages while keeping the homepage concise."
+      ],
+      [
+        "Large image assets",
+        "Generate responsive WebP variants and load below-the-fold images lazily."
+      ]
+    ],
+    "lessons": [
+      "Evidence is stronger than self-ratings.",
+      "A portfolio should grow with projects rather than endlessly adding decorative sections.",
+      "Accessibility and performance need to be designed into components, not added at the end."
+    ],
+    "future": [
+      "Connect a production domain and update canonical/sitemap metadata",
+      "Add the final CV when supplied",
+      "Run production Lighthouse and browser testing",
+      "Replace remaining placeholders with project-specific screenshots where available"
+    ]
+  },
+  {
+    "slug": "remote-income-match",
+    "name": "Remote Income Match™",
+    "status": "IN DEVELOPMENT",
+    "status_class": "building",
+    "type": "Product project",
+    "image": "remote-income-match",
+    "alt": "Remote Income Match current project preview",
+    "summary": "An active project exploring a more systematic way to help people evaluate remote-income opportunities. Only verified implementation evidence is presented as completed.",
+    "problem": "The project is centered on the difficulty of evaluating remote-income opportunities that fit a person’s situation. The exact product requirements are still being refined during development.",
+    "solution": "A matching-oriented product concept. Specific routes, data sources and matching behavior remain marked as in development until they are implemented and tested.",
+    "technologies": [
+      "Product Thinking",
+      "Web Development",
+      "Research"
+    ],
+    "evidence": [
+      "Project concept defined",
+      "Current interface/build preview",
+      "Development documentation in progress"
+    ],
+    "current": "Development and documentation",
+    "next": "Verify implemented features, add testing evidence and publish a repository when ready",
+    "github": null,
+    "live": null,
+    "timeline": [
+      [
+        "Concept",
+        "done"
+      ],
+      [
+        "Requirements",
+        "current"
+      ],
+      [
+        "Implementation",
+        "current"
+      ],
+      [
+        "Testing",
+        "upcoming"
+      ],
+      [
+        "Deployment",
+        "upcoming"
+      ]
+    ],
+    "target": "People evaluating remote-income opportunities; exact target-user segments are still being refined.",
+    "goals": [
+      "Turn the product concept into a working, testable system",
+      "Document only implemented functionality",
+      "Create clear evidence for matching logic and user flows as they are built"
+    ],
+    "research": "Research and requirements work are in progress. The portfolio intentionally does not claim a completed matching engine, live opportunity database or verified results yet.",
+    "implemented": [
+      "Project concept",
+      "Current design/build preview"
+    ],
+    "challenges": [
+      [
+        "Avoiding feature inflation",
+        "Planned functionality is separated from implemented evidence."
+      ],
+      [
+        "Requirements still evolving",
+        "Keep the case study updateable as the product definition becomes more precise."
+      ]
+    ],
+    "lessons": [
+      "Product claims should follow implementation evidence.",
+      "A development status can be informative without using arbitrary completion percentages."
+    ],
+    "future": [
+      "Document verified target users and requirements",
+      "Add architecture after implementation decisions are real",
+      "Add functional testing evidence",
+      "Publish GitHub/live links only when they exist"
+    ]
+  },
+  {
+    "slug": "expense-tracker",
+    "name": "Expense Tracker",
+    "status": "DESIGN COMPLETE",
+    "status_class": "designed",
+    "type": "Application design",
+    "image": "expense-tracker",
+    "alt": "Expense Tracker interface design preview",
+    "summary": "A completed interface design prepared for future implementation. Development, database behavior and results are intentionally not claimed yet.",
+    "problem": "The real problem statement from the project brief still needs to be documented before implementation.",
+    "solution": "The interface design is complete. The implementation approach will be documented when development starts.",
+    "technologies": [
+      "UI Design",
+      "Planning"
+    ],
+    "evidence": [
+      "Completed interface design",
+      "Project screenshot"
+    ],
+    "current": "Design complete",
+    "next": "Document requirements and begin implementation",
+    "github": null,
+    "live": null,
+    "timeline": [
+      [
+        "Concept",
+        "done"
+      ],
+      [
+        "UI design",
+        "done"
+      ],
+      [
+        "Requirements documentation",
+        "current"
+      ],
+      [
+        "Development",
+        "upcoming"
+      ],
+      [
+        "Testing",
+        "upcoming"
+      ],
+      [
+        "Deployment",
+        "upcoming"
+      ]
+    ],
+    "target": "Target users have not yet been verified in the portfolio documentation.",
+    "goals": [
+      "Preserve the completed design",
+      "Document the real requirements",
+      "Turn the design into a working application in traceable stages"
+    ],
+    "research": "Research evidence has not yet been supplied. Add only research actually performed.",
+    "implemented": [
+      "UI/interface design"
+    ],
+    "challenges": [
+      [
+        "Separating design from implementation",
+        "The case study explicitly marks software development and testing as upcoming."
+      ]
+    ],
+    "lessons": [
+      "A strong design is evidence of planning, but it is not evidence of a working application."
+    ],
+    "future": [
+      "Add verified problem statement and target users",
+      "Choose implementation technologies",
+      "Implement data persistence",
+      "Test the working application"
+    ]
+  },
+  {
+    "slug": "hospital-management",
+    "name": "Hospital Management System",
+    "status": "DESIGN COMPLETE",
+    "status_class": "designed",
+    "type": "Information system design",
+    "image": "hospital-management",
+    "alt": "Hospital Management System interface design preview",
+    "summary": "An information-system interface design prepared for future implementation. No hospital modules are claimed as implemented until working evidence exists.",
+    "problem": "The exact system problem and requirements need to be documented from the original design brief before development.",
+    "solution": "A completed interface concept that can be converted into a working information system after requirements are verified.",
+    "technologies": [
+      "UI Design",
+      "Information Systems Planning"
+    ],
+    "evidence": [
+      "Completed interface design",
+      "Project screenshot"
+    ],
+    "current": "Design complete",
+    "next": "Verify requirements and begin system implementation",
+    "github": null,
+    "live": null,
+    "timeline": [
+      [
+        "Concept",
+        "done"
+      ],
+      [
+        "UI design",
+        "done"
+      ],
+      [
+        "Requirements verification",
+        "current"
+      ],
+      [
+        "Development",
+        "upcoming"
+      ],
+      [
+        "Testing",
+        "upcoming"
+      ],
+      [
+        "Deployment",
+        "upcoming"
+      ]
+    ],
+    "target": "Intended users and operational roles must be verified from the project brief before being published.",
+    "goals": [
+      "Document the real workflow and requirements",
+      "Translate the interface into a maintainable system",
+      "Add database and testing evidence after implementation"
+    ],
+    "research": "No verified research record has been supplied for publication yet.",
+    "implemented": [
+      "UI/interface design"
+    ],
+    "challenges": [
+      [
+        "Avoiding invented modules",
+        "The page does not claim patient, billing, appointment or records modules unless they are actually implemented."
+      ]
+    ],
+    "lessons": [
+      "Information-system case studies need workflow and data evidence, not just screenshots."
+    ],
+    "future": [
+      "Document verified modules and workflows",
+      "Design/implement the database",
+      "Implement authentication only if required",
+      "Add functional tests and architecture evidence"
+    ]
+  },
+  {
+    "slug": "mobile-app",
+    "name": "Mobile App",
+    "status": "DESIGN COMPLETE",
+    "status_class": "designed",
+    "type": "Mobile application design",
+    "image": "mobile-app",
+    "alt": "Mobile application interface design preview",
+    "summary": "A mobile interface design prepared for implementation. Framework, navigation logic, APIs and data handling remain unclaimed until development begins.",
+    "problem": "The app’s verified problem statement has not yet been added to the portfolio documentation.",
+    "solution": "A completed interface design that provides a starting point for future mobile implementation.",
+    "technologies": [
+      "Mobile UI Design",
+      "Planning"
+    ],
+    "evidence": [
+      "Completed mobile interface design",
+      "Project screenshot"
+    ],
+    "current": "Design complete",
+    "next": "Document the app purpose/user flow and choose implementation technology",
+    "github": null,
+    "live": null,
+    "timeline": [
+      [
+        "Concept",
+        "done"
+      ],
+      [
+        "UI design",
+        "done"
+      ],
+      [
+        "User-flow documentation",
+        "current"
+      ],
+      [
+        "Development",
+        "upcoming"
+      ],
+      [
+        "Testing",
+        "upcoming"
+      ],
+      [
+        "Release",
+        "upcoming"
+      ]
+    ],
+    "target": "Target users still need to be documented from the real project brief.",
+    "goals": [
+      "Preserve the completed screen design",
+      "Document navigation/user flow",
+      "Build and test the app after technology selection"
+    ],
+    "research": "No verified user research has been supplied for publication.",
+    "implemented": [
+      "Mobile interface design"
+    ],
+    "challenges": [
+      [
+        "Keeping design claims honest",
+        "The portfolio separates designed screens from working mobile functionality."
+      ]
+    ],
+    "lessons": [
+      "Mobile case studies should show navigation and data behavior only after they exist."
+    ],
+    "future": [
+      "Document verified target users",
+      "Create user-flow evidence",
+      "Select framework based on project requirements",
+      "Implement and test on real devices/emulators"
+    ]
+  },
+  {
+    "slug": "database-system",
+    "name": "Database System",
+    "status": "DESIGN COMPLETE",
+    "status_class": "designed",
+    "type": "Database project design",
+    "image": "database-system",
+    "alt": "Database System interface design preview",
+    "summary": "A database-oriented project at the design stage. Schema, queries, constraints and database-engine claims will be added only when verified from the implementation.",
+    "problem": "The exact data problem and entity requirements still need to be documented from the real project brief.",
+    "solution": "A completed design stage prepared for implementation and later evidence such as an ER diagram, schema and tested queries.",
+    "technologies": [
+      "Database Design",
+      "Planning"
+    ],
+    "evidence": [
+      "Completed design/interface",
+      "Project screenshot"
+    ],
+    "current": "Design complete",
+    "next": "Document entities/relationships and begin database implementation",
+    "github": null,
+    "live": null,
+    "timeline": [
+      [
+        "Concept",
+        "done"
+      ],
+      [
+        "Design",
+        "done"
+      ],
+      [
+        "Data requirements",
+        "current"
+      ],
+      [
+        "Database implementation",
+        "upcoming"
+      ],
+      [
+        "Query testing",
+        "upcoming"
+      ],
+      [
+        "Integration",
+        "upcoming"
+      ]
+    ],
+    "target": "The system’s real users and data owners need to be documented before publication.",
+    "goals": [
+      "Document the database purpose",
+      "Create verified entity/relationship evidence",
+      "Implement constraints and queries",
+      "Test data integrity"
+    ],
+    "research": "Verified data-requirement research has not yet been supplied.",
+    "implemented": [
+      "Design stage"
+    ],
+    "challenges": [
+      [
+        "Avoiding unsupported database claims",
+        "The page does not claim tables, keys or queries that have not been verified."
+      ]
+    ],
+    "lessons": [
+      "Database evidence should include schema, relationships, constraints and tested queries—not just an interface."
+    ],
+    "future": [
+      "Add ER diagram",
+      "Implement tables and relationships",
+      "Document primary/foreign keys",
+      "Add query and validation tests"
+    ]
+  }
+]

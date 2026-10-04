@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ContactMessage {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(80)
+  email     String    @db.VarChar(120)
+  subject   String    @db.VarChar(120)
+  message   String    @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(160)
+  passwordHash String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique @db.VarChar(120)
+  name      String   @db.VarChar(140)
+  status    String   @db.VarChar(60)
+  text      String   @db.Text
+  path         String   @db.VarChar(255)
+  imageUrl     String?  @db.VarChar(500)
+  technologies Json?
+  githubUrl    String?  @db.VarChar(500)
+  liveUrl      String?  @db.VarChar(500)
+  featured     Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model SiteProfile {
+  id               Int      @id @default(1)
+  name             String   @db.VarChar(120)
+  role             String   @db.VarChar(220)
+  location         String   @db.VarChar(120)
+  university       String   @db.VarChar(180)
+  studyPeriod      String   @db.VarChar(80)
+  email            String   @db.VarChar(160)
+  githubProfile    String   @db.VarChar(255)
+  githubRepo       String   @db.VarChar(255)
+  linkedin         String   @db.VarChar(255)
+  aboutHeadline    String   @db.VarChar(220)
+  aboutText        String   @db.Text
+  heroFocus        Json
+  currentlyDeveloping Json
+  skillGroups      Json
+  learningGroups   Json
+  availability     Json
+  languages        Json
+  updatedAt        DateTime @updatedAt
+}

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>WALLACE.DEV Admin</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <section id="loginView" class="auth-card">
+      <div class="brand">WALLACE<span>.DEV</span></div>
+      <p class="eyebrow">PRIVATE ADMIN</p>
+      <h1>Portfolio control panel</h1>
+      <p class="muted">Sign in to review visitor messages and manage the projects exposed by the backend API.</p>
+      <form id="loginForm" class="stack">
+        <label>Email<input id="loginEmail" type="email" autocomplete="username" required></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Sign in</button>
+        <p id="loginStatus" class="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="dashboardView" class="dashboard hidden">
+      <header class="topbar">
+        <div>
+          <div class="brand">WALLACE<span>.DEV</span></div>
+          <p class="muted small">Admin dashboard</p>
+        </div>
+        <div class="top-actions">
+          <span id="adminIdentity" class="pill"></span>
+          <button id="refreshBtn" class="secondary" type="button">Refresh</button>
+          <button id="logoutBtn" class="danger-outline" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <div class="stats" id="stats">
+        <article><strong id="messageCount">—</strong><span>Total messages</span></article>
+        <article><strong id="unreadCount">—</strong><span>Unread</span></article>
+        <article><strong id="projectCount">—</strong><span>Projects</span></article>
+      </div>
+
+      <nav class="tabs" aria-label="Admin sections">
+        <button class="tab active" data-tab="messages" type="button">Messages</button>
+        <button class="tab" data-tab="projects" type="button">Projects</button>
+        <button class="tab" data-tab="profile" type="button">Site content</button>
+      </nav>
+
+      <section id="messagesPanel" class="panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">INBOX</p><h2>Contact messages</h2></div>
+          <p id="messagesStatus" class="status" aria-live="polite"></p>
+        </div>
+        <div id="messagesList" class="message-list"></div>
+      </section>
+
+      <section id="projectsPanel" class="panel hidden">
+        <div class="panel-heading">
+          <div><p class="eyebrow">CONTENT</p><h2>Portfolio projects</h2></div>
+          <button id="newProjectBtn" type="button">New project</button>
+        </div>
+        <p id="projectsStatus" class="status" aria-live="polite"></p>
+        <div class="project-layout">
+          <div id="projectsList" class="project-list"></div>
+          <form id="projectForm" class="editor hidden">
+            <input id="projectId" type="hidden">
+            <div class="editor-head"><h3 id="editorTitle">New project</h3><button id="cancelProjectBtn" class="secondary" type="button">Cancel</button></div>
+            <label>Name<input id="projectName" required maxlength="140"></label>
+            <label>Slug<input id="projectSlug" required maxlength="120" pattern="[a-z0-9]+(?:-[a-z0-9]+)*"></label>
+            <label>Status<input id="projectStatus" required maxlength="60" placeholder="LIVE / IN DEVELOPMENT / DESIGN COMPLETE"></label>
+            <label>Page path<input id="projectPath" required maxlength="255" placeholder="/projects/example.html"></label>
+            <label>Project image URL<input id="projectImageUrl" maxlength="500" placeholder="/uploads/... or https://..."></label>
+            <div class="upload-box">
+              <label>Upload project image <small>JPG, PNG, WebP or GIF • maximum 5 MB</small><input id="projectImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+              <button id="uploadProjectImageBtn" class="secondary" type="button">Upload image</button>
+              <p id="uploadStatus" class="status" aria-live="polite"></p>
+              <img id="projectImagePreview" class="project-image-preview hidden" alt="Project image preview">
+            </div>
+            <label>Technologies <small>one item per line</small><textarea id="projectTechnologies" rows="5" placeholder="Node.js&#10;PostgreSQL&#10;Docker"></textarea></label>
+            <label>GitHub URL<input id="projectGithubUrl" type="url" maxlength="500" placeholder="https://github.com/..."></label>
+            <label>Live demo URL<input id="projectLiveUrl" type="url" maxlength="500" placeholder="https://..."></label>
+            <label class="check-row"><input id="projectFeatured" type="checkbox"> Feature this project on the homepage</label>
+            <label>Sort order<input id="projectSortOrder" type="number" min="0" max="10000" value="0" required></label>
+            <label>Description<textarea id="projectText" rows="8" required minlength="20" maxlength="4000"></textarea></label>
+            <button type="submit">Save project</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="profilePanel" class="panel hidden">
+        <div class="panel-heading"><div><p class="eyebrow">DYNAMIC CONTENT</p><h2>Public portfolio content</h2></div></div>
+        <p id="profileStatus" class="status" aria-live="polite"></p>
+        <form id="profileForm" class="editor profile-editor">
+          <div class="form-grid">
+            <label>Name<input id="profileName" required maxlength="120"></label>
+            <label>Role<input id="profileRole" required maxlength="220"></label>
+            <label>Location<input id="profileLocation" required maxlength="120"></label>
+            <label>University<input id="profileUniversity" required maxlength="180"></label>
+            <label>Study period<input id="profileStudyPeriod" required maxlength="80"></label>
+            <label>Email<input id="profileEmail" type="email" required maxlength="160"></label>
+            <label>GitHub profile<input id="profileGithub" type="url" required></label>
+            <label>GitHub portfolio repo<input id="profileGithubRepo" type="url" required></label>
+            <label>LinkedIn<input id="profileLinkedin" type="url" required></label>
+          </div>
+          <label>About headline<input id="profileAboutHeadline" required maxlength="220"></label>
+          <label>About text<textarea id="profileAboutText" rows="5" required></textarea></label>
+          <label>Hero focus <small>one item per line</small><textarea id="profileHeroFocus" rows="5"></textarea></label>
+          <label>Currently developing <small>one item per line</small><textarea id="profileDeveloping" rows="6"></textarea></label>
+          <label>Skill groups <small>Format: Group title: item 1, item 2</small><textarea id="profileSkillGroups" rows="8"></textarea></label>
+          <label>Learning groups <small>Format: STATE | Title | item 1, item 2</small><textarea id="profileLearningGroups" rows="8"></textarea></label>
+          <label>Availability <small>one item per line</small><textarea id="profileAvailability" rows="6"></textarea></label>
+          <label>Languages <small>one item per line</small><textarea id="profileLanguages" rows="4"></textarea></label>
+          <button type="submit">Save public content</button>
+        </form>
+      </section>
+    </section>
+  </main>
+  <script src="js/admin.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+services:
+  db:
+    ports: !override []
+
+  backend:
+    environment:
+      NODE_ENV: production
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set the production website origin}
+    ports: !override
+      - "127.0.0.1:5001:5000"

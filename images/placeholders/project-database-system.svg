@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="DATABASE SYSTEM design preview placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#041225"/><stop offset=".55" stop-color="#071d3b"/><stop offset="1" stop-color="#0a2d63"/></linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="52%"><stop stop-color="#2f7dff" stop-opacity=".28"/><stop offset="1" stop-color="#2f7dff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect x="22" y="22" width="1236" height="676" rx="20" fill="none" stroke="#69aaff" stroke-opacity=".2"/>
+  <circle cx="640" cy="310" r="235" fill="url(#glow)"/>
+  <rect x="536" y="166" width="208" height="104" rx="20" fill="#0b2449" stroke="#5da2ff" stroke-opacity=".35"/>
+  <text x="640" y="232" fill="#79b9ff" font-family="Arial, sans-serif" font-size="34" font-weight="800" text-anchor="middle">DB</text>
+  <text x="640" y="360" fill="#eef7ff" font-family="Arial, sans-serif" font-size="38" font-weight="800" text-anchor="middle">DATABASE SYSTEM</text>
+  <text x="640" y="411" fill="#9bb4cf" font-family="Arial, sans-serif" font-size="20" text-anchor="middle">Add your completed design screenshot</text>
+  <text x="640" y="500" fill="#6f91b6" font-family="Arial, sans-serif" font-size="16" text-anchor="middle">Replace: images/projects/database-system.jpg</text>
+  <text x="640" y="536" fill="#54779d" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">Keep the same filename — no HTML changes required</text>
+</svg>

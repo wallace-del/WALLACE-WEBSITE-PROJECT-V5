@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1100" role="img" aria-label="Profile image placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#041020"/><stop offset=".55" stop-color="#0a2b61"/><stop offset="1" stop-color="#020817"/></linearGradient>
+    <radialGradient id="g"><stop stop-color="#2f7dff" stop-opacity=".26"/><stop offset="1" stop-color="#2f7dff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="900" height="1100" fill="url(#bg)"/>
+  <circle cx="450" cy="410" r="330" fill="url(#g)"/>
+  <circle cx="450" cy="370" r="132" fill="#102b4f" stroke="#3b74bb" stroke-opacity=".45" stroke-width="4"/>
+  <path d="M205 940c18-240 155-360 245-360s227 120 245 360" fill="#102b4f" stroke="#3b74bb" stroke-opacity=".45" stroke-width="4"/>
+  <text x="450" y="1000" fill="#dcecff" font-family="Arial, sans-serif" font-size="36" font-weight="700" text-anchor="middle">ADD YOUR PROFILE PHOTO</text>
+  <text x="450" y="1047" fill="#83a6c8" font-family="Arial, sans-serif" font-size="22" text-anchor="middle">images/profile/wallace.jpg</text>
+</svg>
