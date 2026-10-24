@@ -192,28 +192,60 @@ function isProjectDetailFollowUp(q) {
   return /^(tell me more|more details|explain more|explain it|explain that|explain this|describe it|describe that|describe this|what features does it have|what features does that have|what does it do|how does it work|what is it about|what about it|what about that|tell me about it|tell me about that|can you explain it)\b/.test(q);
 }
 
-function isProjectStatusQuestion(q) {
-  const asksWhich =
-    /\b(which one|which ones|which project|what project|what projects)\b/.test(q);
+function projectSpecificQuestionType(q) {
+  const asksTechnologies =
+    /\b(technologies|technology|tech stack|what tech|what technologies|programming language|programming languages|frameworks|libraries|tools used|built with|written in)\b/.test(q);
 
-  const asksStatus =
-    /\b(status|in development|still developing|still in development|under development|in progress|ongoing|being developed|being built|not finished|unfinished|currently developing)\b/.test(q);
+  const asksFeatures =
+    /\b(features|feature list|functionality|functionalities|capabilities|what does it do|what can it do|what does .* include|what can .* do)\b/.test(q);
 
-  return asksWhich && asksStatus;
+  // If a question asks for both, answer both categories rather than
+  // silently returning only the technology list.
+  if (asksTechnologies && asksFeatures) return 'both';
+  if (asksTechnologies) return 'technologies';
+  if (asksFeatures) return 'features';
+
+  return null;
+}
+
+function formatProjectItems(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map(item => {
+        if (typeof item === 'string') return item.trim();
+
+        if (item && typeof item === 'object') {
+          return String(item.name || item.title || '').trim();
+        }
+
+        return '';
+      })
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return value
+      .split(/[,;\n]/)
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
 }
 
 function scoreProject(project, q) {
   const name = normalize(project.name);
   const slug = normalize(String(project.slug || '').replaceAll('-', ' '));
 
+  // Require a complete phrase match for explicit project names.
+  if (name.length > 2 && q.includes(name)) return 100;
+  if (slug.length > 2 && q.includes(slug)) return 95;
+
   const words = [
     ...new Set(
       `${name} ${slug}`.split(' ').filter(word => word.length > 2)
     )
   ];
-
-  if (name && q.includes(name)) return 100;
-  if (slug && q.includes(slug)) return 95;
 
   let score = 0;
   const queryWords = q.split(' ');
@@ -222,22 +254,16 @@ function scoreProject(project, q) {
     if (queryWords.includes(word)) score += 12;
   }
 
-  const description = normalize(project.text);
-
-  for (const word of queryWords.filter(word => word.length > 3)) {
-    if (description.includes(word)) score += 2;
-  }
-
   return score;
 }
 
 function findProjectInText(projects, text) {
   const normalizedText = normalize(text);
 
-  if (!normalizedText || !projects.length) return null;
+  if (!normalizedText || !Array.isArray(projects) || !projects.length) {
+    return null;
+  }
 
-  // Prefer the longest exact project name to avoid matching a shorter
-  // name when project names overlap.
   const matches = projects
     .filter(project => {
       const name = normalize(project.name);
@@ -266,8 +292,25 @@ function findProjectInText(projects, text) {
 }
 
 function findProjectInRecentAssistantAnswer(projects, history) {
-  const answer = lastAssistantAnswer(history);
-  return findProjectInText(projects, answer);
+  return findProjectInText(projects, lastAssistantAnswer(history));
+}
+
+function findProjectInRecentConversation(projects, history) {
+  if (!Array.isArray(history)) return null;
+
+  // Search backward through the conversation so a short follow-up can
+  // still refer to the last project explicitly discussed.
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const item = history[i];
+
+    if (typeof item?.content !== 'string') continue;
+
+    const found = findProjectInText(projects, item.content);
+
+    if (found) return found;
+  }
+
+  return null;
 }
 
 function resolveQuestion(raw, history, projects = []) {
@@ -275,16 +318,9 @@ function resolveQuestion(raw, history, projects = []) {
   const previous = lastUserQuestion(history);
 
   if (!previous) return q;
-
-  if (isProjectStatusQuestion(q)) {
-    return `${q} portfolio projects project status`;
-  }
-
   if (!isFollowUp(q)) return q;
 
-  // A follow-up should refer to the specific project in the most recent
-  // assistant response whenever that response identifies one.
-  const recentProject = findProjectInRecentAssistantAnswer(projects, history);
+  const recentProject = findProjectInRecentConversation(projects, history);
 
   if (recentProject) {
     return `${q} ${recentProject.name} ${recentProject.slug || ''}`;
@@ -367,7 +403,7 @@ function answerProjectStatus(projects) {
   }
 
   return response(
-    'I could not find a project explicitly marked as in development in the current portfolio database. I will not guess its status. You can review the published projects and their statuses below.',
+    'I could not find a project explicitly marked as in development in the current portfolio database. I will not guess its status.',
     [makeLink('Explore all projects', '/projects.html')]
   );
 }
@@ -383,6 +419,68 @@ function answerProjectDetails(project) {
   return response(text, projectLinks(project));
 }
 
+function answerProjectSpecificQuestion(project, questionType) {
+  const features = formatProjectItems(project.features);
+  const technologies = formatProjectItems(project.technologies);
+  const description = String(project.text || '').trim();
+  const links = projectLinks(project);
+
+  if (questionType === 'both') {
+    const featureText = features.length
+      ? features.join(', ')
+      : 'No separate verified feature list is stored in the portfolio database';
+
+    const technologyText = technologies.length
+      ? technologies.join(', ')
+      : 'No verified project-specific technology stack is stored in the portfolio database';
+
+    return response(
+      `${project.name} — documented information\n\nFeatures: ${featureText}.\n\nTechnologies: ${technologyText}.${description ? `\n\nPublished project description: ${description}` : ''}\n\nCurrent status: ${project.status || 'Status not specified'}.`,
+      links
+    );
+  }
+
+  if (questionType === 'features') {
+    if (features.length) {
+      return response(
+        `The documented features of ${project.name} are: ${features.join(', ')}.\n\nCurrent status: ${project.status || 'Status not specified'}.`,
+        links
+      );
+    }
+
+    return response(
+      `The portfolio database does not currently contain a separate, verified feature list for ${project.name}.${description ? ` Its published description is: ${description}` : ''}\n\nI will not present undocumented or planned functionality as implemented features.\n\nCurrent status: ${project.status || 'Status not specified'}.`,
+      links
+    );
+  }
+
+  if (questionType === 'technologies') {
+    if (technologies.length) {
+      return response(
+        `The technologies specifically documented for ${project.name} are: ${technologies.join(', ')}.`,
+        links
+      );
+    }
+
+    return response(
+      `The portfolio database does not currently list a verified technology stack specifically for ${project.name}. Wallace’s general skills list includes HTML, CSS, JavaScript, SQL, Java, C++, Git, GitHub, VS Code, Android Studio, MySQL and MS Access, but these should not automatically be treated as technologies used in ${project.name}.`,
+      links
+    );
+  }
+
+  return answerProjectDetails(project);
+}
+
+function isProjectStatusQuestion(q) {
+  const asksWhich =
+    /\b(which one|which ones|which project|what project|what projects)\b/.test(q);
+
+  const asksStatus =
+    /\b(status|in development|still developing|still in development|under development|in progress|ongoing|being developed|being built|not finished|unfinished|currently developing)\b/.test(q);
+
+  return asksWhich && asksStatus;
+}
+
 export async function answerPortfolioQuestion(raw, history = []) {
   const original = normalize(raw);
 
@@ -390,7 +488,6 @@ export async function answerPortfolioQuestion(raw, history = []) {
     return response('Please type a question, and I will do my best to help.');
   }
 
-  // Greetings and ordinary conversation.
   if (isGreeting(original)) {
     return response(
       'Hello! 👋 Welcome to WALLACE.DEV. I can tell you about Wallace’s projects, skills, education, learning journey, availability and contact details. What would you like to know?'
@@ -433,7 +530,6 @@ export async function answerPortfolioQuestion(raw, history = []) {
     );
   }
 
-  // Retrieve verified portfolio data before resolving project references.
   const [storedProfile, projects] = await Promise.all([
     prisma.siteProfile.findUnique({ where: { id: 1 } }),
     prisma.project.findMany({
@@ -442,9 +538,11 @@ export async function answerPortfolioQuestion(raw, history = []) {
   ]);
 
   const profile = storedProfile || fallbackProfile;
-  const q = resolveQuestion(raw, history, projects);
+  const q = resolveQuestion(original, history, projects);
 
-  // Explicitly named projects always take priority.
+  const questionType = projectSpecificQuestionType(original);
+
+  // Resolve the explicitly named project first.
   const rankedProjects = projects
     .map(project => ({
       project,
@@ -455,13 +553,36 @@ export async function answerPortfolioQuestion(raw, history = []) {
   const explicitProject = rankedProjects.find(item => item.score >= 24);
 
   if (explicitProject) {
+    if (questionType) {
+      return answerProjectSpecificQuestion(
+        explicitProject.project,
+        questionType
+      );
+    }
+
     return answerProjectDetails(explicitProject.project);
   }
 
-  // Follow-up questions such as "Tell me more about it" should use the
-  // project mentioned in the most recent assistant answer.
+  // Resolve feature and technology follow-ups before general skills.
+  // This prevents "What technologies does it use?" from returning the
+  // general skills list when a project was discussed earlier.
+  if (questionType) {
+    const contextualProject = findProjectInRecentConversation(
+      projects,
+      history
+    );
+
+    if (contextualProject) {
+      return answerProjectSpecificQuestion(
+        contextualProject,
+        questionType
+      );
+    }
+  }
+
+  // Resolve ordinary project-detail follow-ups.
   if (isProjectDetailFollowUp(original)) {
-    const contextualProject = findProjectInRecentAssistantAnswer(
+    const contextualProject = findProjectInRecentConversation(
       projects,
       history
     );
@@ -471,11 +592,10 @@ export async function answerPortfolioQuestion(raw, history = []) {
     }
   }
 
-  // Status questions must be handled before generic project-list matching.
+  // Project-status questions are handled before generic project listing.
   const directStatusQuestion = isProjectStatusQuestion(original);
 
   const contextualStatusQuestion =
-    hasProjectContext(history) &&
     /\b(which one|which ones|which project|what project|what projects)\b/.test(q) &&
     /\b(status|development|developing|progress|ongoing)\b/.test(q);
 
@@ -506,15 +626,14 @@ export async function answerPortfolioQuestion(raw, history = []) {
       );
     }
 
-    const summary = projects.map(projectSummary).join('; ');
-
     return response(
-      `Wallace’s portfolio currently lists ${projects.length} projects: ${summary}. Project details and statuses are taken from the portfolio database.`,
+      `Wallace’s portfolio currently lists ${projects.length} projects: ${projects.map(projectSummary).join('; ')}. Project details and statuses are taken from the portfolio database.`,
       [makeLink('Explore all projects', '/projects.html')]
     );
   }
 
-  // Technologies and skills.
+  // General technologies and skills. Reached only after project-specific
+  // technology questions have had a chance to resolve.
   if (containsAny(q, [
     'technology',
     'technologies',
@@ -625,7 +744,8 @@ export async function answerPortfolioQuestion(raw, history = []) {
   }
 
   // Languages.
-  if (containsAny(q, ['language', 'languages spoken', 'speak'])) {
+  if (containsAny(original, ['languages spoken', 'speak']) ||
+      /^(language|languages)\b/.test(original)) {
     const languages = Array.isArray(profile.languages)
       ? profile.languages
       : [];
