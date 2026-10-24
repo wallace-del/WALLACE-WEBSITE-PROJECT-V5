@@ -1,11 +1,10 @@
 (() => {
 
   const API_ROOT =
-    (window.location.hostname === 'localhost' ||
-     window.location.hostname === '127.0.0.1')
-      ? 'http://127.0.0.1:5001'
-      : window.location.origin;
-
+  (window.location.hostname === 'localhost' ||
+   window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:5001'
+    : 'https://wallace-v5-backend.onrender.com';
   const API = `${API_ROOT}/api`;
 
   const $ = (id) => document.getElementById(id);
