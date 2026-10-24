@@ -147,6 +147,20 @@ function lastUserQuestion(history) {
   return '';
 }
 
+function lastAssistantAnswer(history) {
+  if (!Array.isArray(history)) return '';
+
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const item = history[i];
+
+    if (item?.role === 'assistant' && typeof item.content === 'string') {
+      return item.content;
+    }
+  }
+
+  return '';
+}
+
 function hasProjectContext(history) {
   if (!Array.isArray(history)) return false;
 
@@ -171,11 +185,16 @@ function hasProjectContext(history) {
 }
 
 function isFollowUp(q) {
-  return /^(tell me more|more details|explain more|why|how so|what about it|what about that|and that|and it|which one|which ones|which project|the first one|the second one|that one|it\b|they\b|them\b|its\b|their\b|what technologies does it use|what tech does it use|how can i do that|continue|go on|is it still in development|what about the status|what about its status)\b/.test(q);
+  return /^(tell me more|more details|explain more|explain it|explain that|describe it|describe that|why|how so|what about it|what about that|and that|and it|which one|which ones|which project|the first one|the second one|that one|it\b|they\b|them\b|its\b|their\b|what technologies does it use|what tech does it use|what features does it have|what does it do|how does it work|how can i do that|continue|go on|is it still in development|what about the status|what about its status)\b/.test(q);
+}
+
+function isProjectDetailFollowUp(q) {
+  return /^(tell me more|more details|explain more|explain it|explain that|explain this|describe it|describe that|describe this|what features does it have|what features does that have|what does it do|how does it work|what is it about|what about it|what about that|tell me about it|tell me about that|can you explain it)\b/.test(q);
 }
 
 function isProjectStatusQuestion(q) {
-  const asksWhich = /\b(which one|which ones|which project|what project|what projects)\b/.test(q);
+  const asksWhich =
+    /\b(which one|which ones|which project|what project|what projects)\b/.test(q);
 
   const asksStatus =
     /\b(status|in development|still developing|still in development|under development|in progress|ongoing|being developed|being built|not finished|unfinished|currently developing)\b/.test(q);
@@ -183,18 +202,93 @@ function isProjectStatusQuestion(q) {
   return asksWhich && asksStatus;
 }
 
-function resolveQuestion(raw, history) {
+function scoreProject(project, q) {
+  const name = normalize(project.name);
+  const slug = normalize(String(project.slug || '').replaceAll('-', ' '));
+
+  const words = [
+    ...new Set(
+      `${name} ${slug}`.split(' ').filter(word => word.length > 2)
+    )
+  ];
+
+  if (name && q.includes(name)) return 100;
+  if (slug && q.includes(slug)) return 95;
+
+  let score = 0;
+  const queryWords = q.split(' ');
+
+  for (const word of words) {
+    if (queryWords.includes(word)) score += 12;
+  }
+
+  const description = normalize(project.text);
+
+  for (const word of queryWords.filter(word => word.length > 3)) {
+    if (description.includes(word)) score += 2;
+  }
+
+  return score;
+}
+
+function findProjectInText(projects, text) {
+  const normalizedText = normalize(text);
+
+  if (!normalizedText || !projects.length) return null;
+
+  // Prefer the longest exact project name to avoid matching a shorter
+  // name when project names overlap.
+  const matches = projects
+    .filter(project => {
+      const name = normalize(project.name);
+      const slug = normalize(String(project.slug || '').replaceAll('-', ' '));
+
+      return (
+        (name.length > 2 && normalizedText.includes(name)) ||
+        (slug.length > 2 && normalizedText.includes(slug))
+      );
+    })
+    .sort((a, b) => {
+      const aLength = Math.max(
+        normalize(a.name).length,
+        normalize(String(a.slug || '').replaceAll('-', ' ')).length
+      );
+
+      const bLength = Math.max(
+        normalize(b.name).length,
+        normalize(String(b.slug || '').replaceAll('-', ' ')).length
+      );
+
+      return bLength - aLength;
+    });
+
+  return matches[0] || null;
+}
+
+function findProjectInRecentAssistantAnswer(projects, history) {
+  const answer = lastAssistantAnswer(history);
+  return findProjectInText(projects, answer);
+}
+
+function resolveQuestion(raw, history, projects = []) {
   const q = normalize(raw);
   const previous = lastUserQuestion(history);
 
   if (!previous) return q;
 
-  // Preserve explicit project-status intent.
   if (isProjectStatusQuestion(q)) {
     return `${q} portfolio projects project status`;
   }
 
   if (!isFollowUp(q)) return q;
+
+  // A follow-up should refer to the specific project in the most recent
+  // assistant response whenever that response identifies one.
+  const recentProject = findProjectInRecentAssistantAnswer(projects, history);
+
+  if (recentProject) {
+    return `${q} ${recentProject.name} ${recentProject.slug || ''}`;
+  }
 
   if (
     /\b(project|projects|built|build|portfolio|work|development)\b/.test(previous) ||
@@ -222,34 +316,6 @@ function resolveQuestion(raw, history) {
   return q;
 }
 
-function scoreProject(project, q) {
-  const name = normalize(project.name);
-  const slug = normalize(String(project.slug || '').replaceAll('-', ' '));
-  const words = [
-    ...new Set(
-      `${name} ${slug}`.split(' ').filter(word => word.length > 2)
-    )
-  ];
-
-  if (name && q.includes(name)) return 100;
-  if (slug && q.includes(slug)) return 95;
-
-  let score = 0;
-  const queryWords = q.split(' ');
-
-  for (const word of words) {
-    if (queryWords.includes(word)) score += 12;
-  }
-
-  const description = normalize(project.text);
-
-  for (const word of queryWords.filter(word => word.length > 3)) {
-    if (description.includes(word)) score += 2;
-  }
-
-  return score;
-}
-
 function projectLinks(project) {
   const links = [];
 
@@ -271,8 +337,6 @@ function projectLinks(project) {
 function isInDevelopment(project) {
   const status = normalize(project.status);
 
-  // Match development statuses without confusing "design complete"
-  // or other completed statuses with active development.
   return (
     /\b(in development|under development|in progress|currently developing|being developed|ongoing development)\b/.test(status) ||
     status === 'developing'
@@ -308,6 +372,17 @@ function answerProjectStatus(projects) {
   );
 }
 
+function answerProjectDetails(project) {
+  const description = String(project.text || '').trim();
+  const status = project.status || 'Status not specified';
+
+  const text = description
+    ? `${description}\n\nCurrent status: ${status}.`
+    : `${project.name} is listed in Wallace’s portfolio. The portfolio database does not currently contain a detailed description for this project.\n\nCurrent status: ${status}.`;
+
+  return response(text, projectLinks(project));
+}
+
 export async function answerPortfolioQuestion(raw, history = []) {
   const original = normalize(raw);
 
@@ -315,7 +390,7 @@ export async function answerPortfolioQuestion(raw, history = []) {
     return response('Please type a question, and I will do my best to help.');
   }
 
-  // Handle greetings and ordinary conversation.
+  // Greetings and ordinary conversation.
   if (isGreeting(original)) {
     return response(
       'Hello! 👋 Welcome to WALLACE.DEV. I can tell you about Wallace’s projects, skills, education, learning journey, availability and contact details. What would you like to know?'
@@ -358,9 +433,7 @@ export async function answerPortfolioQuestion(raw, history = []) {
     );
   }
 
-  const q = resolveQuestion(raw, history);
-
-  // Retrieve verified portfolio data.
+  // Retrieve verified portfolio data before resolving project references.
   const [storedProfile, projects] = await Promise.all([
     prisma.siteProfile.findUnique({ where: { id: 1 } }),
     prisma.project.findMany({
@@ -369,10 +442,36 @@ export async function answerPortfolioQuestion(raw, history = []) {
   ]);
 
   const profile = storedProfile || fallbackProfile;
+  const q = resolveQuestion(raw, history, projects);
 
-  // Handle project-status questions BEFORE project-name scoring.
-  // This prevents words such as "project" or "development" from
-  // accidentally selecting an unrelated project.
+  // Explicitly named projects always take priority.
+  const rankedProjects = projects
+    .map(project => ({
+      project,
+      score: scoreProject(project, original)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const explicitProject = rankedProjects.find(item => item.score >= 24);
+
+  if (explicitProject) {
+    return answerProjectDetails(explicitProject.project);
+  }
+
+  // Follow-up questions such as "Tell me more about it" should use the
+  // project mentioned in the most recent assistant answer.
+  if (isProjectDetailFollowUp(original)) {
+    const contextualProject = findProjectInRecentAssistantAnswer(
+      projects,
+      history
+    );
+
+    if (contextualProject) {
+      return answerProjectDetails(contextualProject);
+    }
+  }
+
+  // Status questions must be handled before generic project-list matching.
   const directStatusQuestion = isProjectStatusQuestion(original);
 
   const contextualStatusQuestion =
@@ -390,26 +489,7 @@ export async function answerPortfolioQuestion(raw, history = []) {
     return answerProjectStatus(projects);
   }
 
-  // Prefer a project explicitly named by the visitor.
-  const rankedProjects = projects
-    .map(project => ({
-      project,
-      score: scoreProject(project, q)
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  const explicitProject = rankedProjects.find(item => item.score >= 24);
-
-  if (explicitProject) {
-    const project = explicitProject.project;
-
-    return response(
-      `${project.text}\n\nCurrent status: ${project.status}.`,
-      projectLinks(project)
-    );
-  }
-
-  // Project listing and project discovery.
+  // Project listing and discovery.
   if (containsAny(q, [
     'project',
     'projects',
@@ -569,9 +649,7 @@ export async function answerPortfolioQuestion(raw, history = []) {
       return response(
         `These published projects may be relevant to database work: ${matches.map(projectSummary).join(', ')}.`,
         matches.flatMap(project =>
-          project.path
-            ? [makeLink(project.name, project.path)]
-            : []
+          project.path ? [makeLink(project.name, project.path)] : []
         )
       );
     }
