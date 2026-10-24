@@ -1,0 +1,22 @@
+CREATE TABLE "SiteProfile" (
+    "id" INTEGER NOT NULL DEFAULT 1,
+    "name" VARCHAR(120) NOT NULL,
+    "role" VARCHAR(220) NOT NULL,
+    "location" VARCHAR(120) NOT NULL,
+    "university" VARCHAR(180) NOT NULL,
+    "studyPeriod" VARCHAR(80) NOT NULL,
+    "email" VARCHAR(160) NOT NULL,
+    "githubProfile" VARCHAR(255) NOT NULL,
+    "githubRepo" VARCHAR(255) NOT NULL,
+    "linkedin" VARCHAR(255) NOT NULL,
+    "aboutHeadline" VARCHAR(220) NOT NULL,
+    "aboutText" TEXT NOT NULL,
+    "heroFocus" JSONB NOT NULL,
+    "currentlyDeveloping" JSONB NOT NULL,
+    "skillGroups" JSONB NOT NULL,
+    "learningGroups" JSONB NOT NULL,
+    "availability" JSONB NOT NULL,
+    "languages" JSONB NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "SiteProfile_pkey" PRIMARY KEY ("id")
+);

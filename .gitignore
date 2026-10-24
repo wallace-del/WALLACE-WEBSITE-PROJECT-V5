@@ -15,7 +15,7 @@ npm-debug.log*
 # Backups
 backups/
 *.sql
-
+!backend/prisma/migrations/**/migration.sql
 # Uploads if they may contain private/user files
 uploads/
 
