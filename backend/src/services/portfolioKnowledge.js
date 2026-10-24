@@ -97,6 +97,7 @@ function normalize(value) {
     .normalize('NFKC')
     .toLowerCase()
     .replace(/[’‘]/g, "'")
+    .replace(/[–—]/g, '-')
     .replace(/[^a-z0-9+#.\s'-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -134,27 +135,72 @@ function isSmallTalk(q) {
 
 function lastUserQuestion(history) {
   if (!Array.isArray(history)) return '';
+
   for (let i = history.length - 1; i >= 0; i -= 1) {
     const item = history[i];
+
     if (item?.role === 'user' && typeof item.content === 'string') {
       return normalize(item.content);
     }
   }
+
   return '';
 }
 
+function hasProjectContext(history) {
+  if (!Array.isArray(history)) return false;
+
+  const userMessages = history
+    .filter(item => item?.role === 'user')
+    .map(item => normalize(item.content));
+
+  const assistantMessages = history
+    .filter(item => item?.role === 'assistant')
+    .map(item => normalize(item.content));
+
+  const projectQuestionPattern =
+    /\b(project|projects|built|build|portfolio|work|developed|development)\b/;
+
+  const assistantProjectPattern =
+    /\b(projects|in development|design complete|currently lists)\b/;
+
+  return (
+    userMessages.some(message => projectQuestionPattern.test(message)) ||
+    assistantMessages.some(message => assistantProjectPattern.test(message))
+  );
+}
+
 function isFollowUp(q) {
-  return /^(tell me more|more details|explain more|why|how so|what about it|what about that|and that|and it|which one|the first one|the second one|that one|it|they|them|its|their|what technologies does it use|what tech does it use|how can i do that|continue|go on)\b/.test(q);
+  return /^(tell me more|more details|explain more|why|how so|what about it|what about that|and that|and it|which one|which ones|which project|the first one|the second one|that one|it\b|they\b|them\b|its\b|their\b|what technologies does it use|what tech does it use|how can i do that|continue|go on|is it still in development|what about the status|what about its status)\b/.test(q);
+}
+
+function isProjectStatusQuestion(q) {
+  const asksWhich = /\b(which one|which ones|which project|what project|what projects)\b/.test(q);
+
+  const asksStatus =
+    /\b(status|in development|still developing|still in development|under development|in progress|ongoing|being developed|being built|not finished|unfinished|currently developing)\b/.test(q);
+
+  return asksWhich && asksStatus;
 }
 
 function resolveQuestion(raw, history) {
   const q = normalize(raw);
   const previous = lastUserQuestion(history);
 
-  if (!isFollowUp(q) || !previous) return q;
+  if (!previous) return q;
 
-  if (/\b(project|built|portfolio|work)\b/.test(previous)) {
-    return `${q} portfolio projects`;
+  // Preserve explicit project-status intent.
+  if (isProjectStatusQuestion(q)) {
+    return `${q} portfolio projects project status`;
+  }
+
+  if (!isFollowUp(q)) return q;
+
+  if (
+    /\b(project|projects|built|build|portfolio|work|development)\b/.test(previous) ||
+    hasProjectContext(history)
+  ) {
+    return `${q} portfolio projects project status`;
   }
 
   if (/\b(technology|technologies|tech stack|programming|skills|language|tools)\b/.test(previous)) {
@@ -179,18 +225,25 @@ function resolveQuestion(raw, history) {
 function scoreProject(project, q) {
   const name = normalize(project.name);
   const slug = normalize(String(project.slug || '').replaceAll('-', ' '));
-  const words = [...new Set(`${name} ${slug}`.split(' ').filter(word => word.length > 2))];
+  const words = [
+    ...new Set(
+      `${name} ${slug}`.split(' ').filter(word => word.length > 2)
+    )
+  ];
 
   if (name && q.includes(name)) return 100;
   if (slug && q.includes(slug)) return 95;
 
   let score = 0;
+  const queryWords = q.split(' ');
+
   for (const word of words) {
-    if (q.split(' ').includes(word)) score += 12;
+    if (queryWords.includes(word)) score += 12;
   }
 
   const description = normalize(project.text);
-  for (const word of q.split(' ').filter(word => word.length > 3)) {
+
+  for (const word of queryWords.filter(word => word.length > 3)) {
     if (description.includes(word)) score += 2;
   }
 
@@ -198,9 +251,11 @@ function scoreProject(project, q) {
 }
 
 function projectLinks(project) {
-  const links = [
-    makeLink(`View ${project.name}`, project.path)
-  ];
+  const links = [];
+
+  if (project.path) {
+    links.push(makeLink(`View ${project.name}`, project.path));
+  }
 
   if (project.liveUrl) {
     links.push(makeLink('Open live project', project.liveUrl));
@@ -213,6 +268,46 @@ function projectLinks(project) {
   return links;
 }
 
+function isInDevelopment(project) {
+  const status = normalize(project.status);
+
+  // Match development statuses without confusing "design complete"
+  // or other completed statuses with active development.
+  return (
+    /\b(in development|under development|in progress|currently developing|being developed|ongoing development)\b/.test(status) ||
+    status === 'developing'
+  );
+}
+
+function projectSummary(project) {
+  return `${project.name} (${project.status || 'Status not specified'})`;
+}
+
+function answerProjectStatus(projects) {
+  const activeProjects = projects.filter(isInDevelopment);
+
+  if (activeProjects.length === 1) {
+    const project = activeProjects[0];
+
+    return response(
+      `${project.name} is currently listed as ${project.status} in the portfolio database.`,
+      projectLinks(project)
+    );
+  }
+
+  if (activeProjects.length > 1) {
+    return response(
+      `The following projects are currently listed as in development: ${activeProjects.map(projectSummary).join('; ')}.`,
+      [makeLink('Explore all projects', '/projects.html')]
+    );
+  }
+
+  return response(
+    'I could not find a project explicitly marked as in development in the current portfolio database. I will not guess its status. You can review the published projects and their statuses below.',
+    [makeLink('Explore all projects', '/projects.html')]
+  );
+}
+
 export async function answerPortfolioQuestion(raw, history = []) {
   const original = normalize(raw);
 
@@ -220,7 +315,7 @@ export async function answerPortfolioQuestion(raw, history = []) {
     return response('Please type a question, and I will do my best to help.');
   }
 
-  // Handle ordinary conversation before searching the portfolio database.
+  // Handle greetings and ordinary conversation.
   if (isGreeting(original)) {
     return response(
       'Hello! 👋 Welcome to WALLACE.DEV. I can tell you about Wallace’s projects, skills, education, learning journey, availability and contact details. What would you like to know?'
@@ -229,7 +324,7 @@ export async function answerPortfolioQuestion(raw, history = []) {
 
   if (isThanks(original)) {
     return response(
-      'You’re welcome! 😊 Feel free to ask me anything about Wallace’s portfolio, projects or technical skills.'
+      'You’re welcome! 😊 Feel free to ask me about Wallace’s portfolio, projects or technical skills.'
     );
   }
 
@@ -247,18 +342,25 @@ export async function answerPortfolioQuestion(raw, history = []) {
 
   if (containsAny(original, ['who are you', 'what can you do', 'can you help'])) {
     return response(
-      'I’m Wallace AI, the portfolio assistant for WALLACE.DEV. I can answer questions using the portfolio’s stored information about projects, technologies, education, learning areas, availability and contact details. I can also respond to greetings and follow-up questions.'
+      'I’m Wallace AI, the portfolio assistant for WALLACE.DEV. I answer using stored portfolio information about projects, technologies, education, learning areas, availability and contact details. I can also respond to greetings and relevant follow-up questions.'
     );
   }
 
-  if (containsAny(original, ['how are you', 'how are things', 'how is it going', "what's up", 'whats up'])) {
+  if (containsAny(original, [
+    'how are you',
+    'how are things',
+    'how is it going',
+    "what's up",
+    'whats up'
+  ])) {
     return response(
-      'I’m doing well, thank you for asking! 😊 I’m ready to help you explore Wallace’s portfolio. How are you, and what would you like to know?'
+      'I’m doing well, thank you for asking! 😊 I’m ready to help you explore Wallace’s portfolio. What would you like to know?'
     );
   }
 
   const q = resolveQuestion(raw, history);
 
+  // Retrieve verified portfolio data.
   const [storedProfile, projects] = await Promise.all([
     prisma.siteProfile.findUnique({ where: { id: 1 } }),
     prisma.project.findMany({
@@ -268,56 +370,104 @@ export async function answerPortfolioQuestion(raw, history = []) {
 
   const profile = storedProfile || fallbackProfile;
 
+  // Handle project-status questions BEFORE project-name scoring.
+  // This prevents words such as "project" or "development" from
+  // accidentally selecting an unrelated project.
+  const directStatusQuestion = isProjectStatusQuestion(original);
+
+  const contextualStatusQuestion =
+    hasProjectContext(history) &&
+    /\b(which one|which ones|which project|what project|what projects)\b/.test(q) &&
+    /\b(status|development|developing|progress|ongoing)\b/.test(q);
+
+  if (directStatusQuestion || contextualStatusQuestion) {
+    if (!projects.length) {
+      return response(
+        'No verified projects are currently published in the portfolio database.'
+      );
+    }
+
+    return answerProjectStatus(projects);
+  }
+
   // Prefer a project explicitly named by the visitor.
   const rankedProjects = projects
-    .map(project => ({ project, score: scoreProject(project, q) }))
+    .map(project => ({
+      project,
+      score: scoreProject(project, q)
+    }))
     .sort((a, b) => b.score - a.score);
 
   const explicitProject = rankedProjects.find(item => item.score >= 24);
+
   if (explicitProject) {
     const project = explicitProject.project;
+
     return response(
       `${project.text}\n\nCurrent status: ${project.status}.`,
       projectLinks(project)
     );
   }
 
+  // Project listing and project discovery.
   if (containsAny(q, [
-    'project', 'projects', 'built', 'build', 'portfolio work',
-    'showcase', 'what has wallace made', 'what has wallace created'
+    'project',
+    'projects',
+    'built',
+    'build',
+    'portfolio work',
+    'showcase',
+    'what has wallace made',
+    'what has wallace created'
   ])) {
     if (!projects.length) {
-      return response('No verified projects are currently published in the portfolio.');
+      return response(
+        'No verified projects are currently published in the portfolio.'
+      );
     }
 
-    const summary = projects
-      .map(project => `${project.name} (${project.status})`)
-      .join('; ');
+    const summary = projects.map(projectSummary).join('; ');
 
     return response(
-      `Wallace’s portfolio currently lists ${projects.length} projects: ${summary}. Project details and status are taken from the portfolio database.`,
+      `Wallace’s portfolio currently lists ${projects.length} projects: ${summary}. Project details and statuses are taken from the portfolio database.`,
       [makeLink('Explore all projects', '/projects.html')]
     );
   }
 
+  // Technologies and skills.
   if (containsAny(q, [
-    'technology', 'technologies', 'tech stack', 'programming',
-    'programming language', 'coding language', 'tools', 'skills',
-    'what can wallace use', 'technical abilities'
+    'technology',
+    'technologies',
+    'tech stack',
+    'programming',
+    'programming language',
+    'coding language',
+    'tools',
+    'skills',
+    'what can wallace use',
+    'technical abilities'
   ])) {
-    const skills = flatten(profile.skillGroups);
-    const uniqueSkills = [...new Set(skills)];
+    const skills = [...new Set(flatten(profile.skillGroups))];
 
     return response(
-      `The technologies and skill areas currently listed in Wallace’s portfolio are: ${uniqueSkills.join(', ')}.`,
+      `The technologies and skill areas currently listed in Wallace’s portfolio are: ${skills.join(', ')}.`,
       [makeLink('See skills', '/#skills')]
     );
   }
 
+  // Availability and opportunities.
   if (containsAny(q, [
-    'available', 'availability', 'internship', 'freelance',
-    'hire', 'hiring', 'opportunity', 'opportunities',
-    'attachment', 'work with wallace', 'employ wallace'
+    'available',
+    'availability',
+    'internship',
+    'freelance',
+    'hire',
+    'hiring',
+    'opportunity',
+    'opportunities',
+    'attachment',
+    'work with wallace',
+    'employ wallace'
   ])) {
     return response(
       `Wallace’s portfolio lists these opportunities of interest: ${(profile.availability || []).join(', ')}. Please contact Wallace directly to confirm current availability.`,
@@ -325,6 +475,7 @@ export async function answerPortfolioQuestion(raw, history = []) {
     );
   }
 
+  // GitHub and source code.
   if (containsAny(q, ['github', 'repository', 'repo', 'source code'])) {
     return response(
       'You can explore Wallace’s GitHub profile and portfolio repository using the links below.',
@@ -335,9 +486,15 @@ export async function answerPortfolioQuestion(raw, history = []) {
     );
   }
 
+  // Learning areas.
   if (containsAny(q, [
-    'learning', 'currently learn', 'learning now', 'studying',
-    'exploring', 'improving skills', 'learning journey'
+    'learning',
+    'currently learn',
+    'learning now',
+    'studying',
+    'exploring',
+    'improving skills',
+    'learning journey'
   ])) {
     const learning = flatten(profile.learningGroups);
     const current = Array.isArray(profile.currentlyDeveloping)
@@ -350,9 +507,15 @@ export async function answerPortfolioQuestion(raw, history = []) {
     );
   }
 
+  // Contact details.
   if (containsAny(q, [
-    'contact', 'email', 'linkedin', 'reach', 'get in touch',
-    'phone number', 'contact details'
+    'contact',
+    'email',
+    'linkedin',
+    'reach',
+    'get in touch',
+    'phone number',
+    'contact details'
   ])) {
     return response(
       `You can contact Wallace by email at ${profile.email}, or through LinkedIn and GitHub.`,
@@ -364,9 +527,15 @@ export async function answerPortfolioQuestion(raw, history = []) {
     );
   }
 
+  // Education and biography.
   if (containsAny(q, [
-    'education', 'university', 'degree', 'student',
-    'who is wallace', 'about wallace', 'tell me about wallace',
+    'education',
+    'university',
+    'degree',
+    'student',
+    'who is wallace',
+    'about wallace',
+    'tell me about wallace',
     'where does wallace study'
   ])) {
     return response(
@@ -375,11 +544,18 @@ export async function answerPortfolioQuestion(raw, history = []) {
     );
   }
 
+  // Languages.
   if (containsAny(q, ['language', 'languages spoken', 'speak'])) {
-    const languages = Array.isArray(profile.languages) ? profile.languages : [];
-    return response(`The languages listed in Wallace’s portfolio are: ${languages.join(', ')}.`);
+    const languages = Array.isArray(profile.languages)
+      ? profile.languages
+      : [];
+
+    return response(
+      `The languages listed in Wallace’s portfolio are: ${languages.join(', ')}.`
+    );
   }
 
+  // Database-related questions.
   if (containsAny(q, ['database', 'databases', 'sql', 'mysql'])) {
     const matches = projects
       .filter(project =>
@@ -391,8 +567,12 @@ export async function answerPortfolioQuestion(raw, history = []) {
 
     if (matches.length) {
       return response(
-        `These published projects may be relevant to database work: ${matches.map(project => `${project.name} (${project.status})`).join(', ')}.`,
-        matches.map(project => makeLink(project.name, project.path))
+        `These published projects may be relevant to database work: ${matches.map(projectSummary).join(', ')}.`,
+        matches.flatMap(project =>
+          project.path
+            ? [makeLink(project.name, project.path)]
+            : []
+        )
       );
     }
 
